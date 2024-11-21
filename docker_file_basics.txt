@@ -1,0 +1,1 @@
+Dockerfile is the configuration of our containers. specify base-image + run installation of dependencies + startup-commands

@@ -1,0 +1,54 @@
+Udemy Dcoker and k8s
+Docker image = FileSystem Snapshot + a startup command
+	Filesystem contains all required dependencies and configuration of docker image
+Every Docker container is isolated by default. This is achived by the linux keral features/concepts of Namespace + cgroup
+	Namespacing : Allows us to isolate or create access restrictions to software/users/network/path/etc
+	Control Group : set limits of cpu/mem/disk/bandwidth/etc
+	TTY1							TTY2							TTY3
+	#docker run -it busybox sh		#docker run -it busybox sh		#docker ps
+		#ls								#ls							#docker exec <busybox1-id> ls
+		#touch newfile					#mkdir newdir				#docker exec <busybox2-id> ls
+		#ls								#ls
+docker run <image-name> <override-startup-commands> || override-startup-commands is optional
+	#docker run hello-world
+	#docker run busy-box echo whats up
+	#docker run busy-box ls
+	#docker run busy-box ping google.com || Use <#docker start <id>> to keep it running
+	#docker ps --all
+Docker create will mount the FSsnapshot onto the allocated volume. override-startup-commands is optional
+Docker start will run the container. -a = attach to terminal
+	#docker create hello-world || returns container-id. copy it
+	#docker start -a <container-id> || -a=attach container to terminal
+	#docker start <id>
+	#docker create busy-box echo whats up
+	#docker create busy-box ping google.com
+	#docker ps
+	#docker start -a <id> || use any id from output of docker ps
+#docker create <image-name> + #docker start -a <container-id> = #docker run <image-name>
+Recover storage from dead/stopped containers
+	#docker ps --all
+	#docker system prune
+	#docker ps --all
+See what live containers are doing.
+	#docker logs <id>
+Stop running containers
+	#docker stop <id> || container gets 10sec to stop on its own before docker-cli does a kills
+	#docker start <id>
+	#docker kill <id>
+Interact with live containers and/or run containers with additional-startup-commands. additional-startup-commands is mandatory
+	#docker exec -it <id> <additional-startup-commands> || -i=attach STDIN of terminal with STDIN -t=enable container specific prompt(bash,psql,rediscli,#,$,>)
+	#docker exec -it <id> sh 
+	#docker exec -it <id> bash
+	#docker run redis
+		#redis-cli 			|| These 3 commands wont work cuz docker is running only the Redis Server
+		#set myvariable 12
+		#get myvariable
+	#docker ps
+	#docker exec -it <id> redis-cli || Try this without -t
+		#set myvariable 23  || These 2 commands will work
+		#get myvariable
+	#docker exec -it <id> sh
+		#redis-cli 			|| These 3 commands will work
+		#set myvariable 44
+		#get myvariable
+	docker run -it busy-box sh || This will open interactive shell but at the cost of running the default startup command.
