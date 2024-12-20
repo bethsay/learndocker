@@ -1,0 +1,17 @@
+We will run a nodejs webpage displaying some text.
+If it wasnt for docker, nodejs must be installed on laptop, dev machine and every other host for webpage to work.
+simple_project contains 
+-package.json to define dependencies. any version of express. express is a minimal web app frameworks
+-index.js for webpage. port and content is defined here  
+Create dockerfile in project folder to fetch compatabile image + copy web files into container FS + RUN webpage
+    #docker build -t betzdockz/mynpmwebpage .
+    #docker run betzdockz/mynpmwebpage
+The webpage is listening on 8080 and should be accessible in browser when you call localhost:8080.
+But the host machine is not aware of it.
+Perform port mapping to connect some hostport to containerport with -p
+    #docker run -p 323232:8080 betzdockz/mynpmwebpage
+Now check browser with localhost:8080.
+Anytime we make any change in index.js, or package.js or Dockerfile, we should
+    #docker build -t betzdockz/mynpmwebpage .
+    #docker run -p 323232:<app.listen.port> betzdockz/mynpmwebpage
+Practice by modifying the content, ie app.get, and port, ie app.listen, in index.js file
