@@ -6,12 +6,20 @@ In the Dockerfile, specify base-image + run installation of dependencies + start
     #CMD <startup command>
 Copy the sample mydockerfiles/Dockerfile_redis as Dockerfile and build it
     #docker build .
+    #docker build -t <dockerid/projectname:version> .
+    #docker build -t betzdockz/myredis:latest .
 On Linux you may see the imageid at the end of the output
-    # docker run <image-id>
+    #docker run <image-id>
 On Windows Docker Desktop, cli will return build-id at the end. We cant use it with docker run
 Check the GUI build page and image page. Copy the imageid and do docker run with it.
-    # docker run <image-id>
+    #docker run <image-id>
 At each command in the Dockerfile,
     Docker runs a temp container 
         using the temp image from output of previous command (Exception for for first command ie FROM)
         and creates temp image using the command/parameters to be run as a temp container for next command (Exception for last command ie CMD)
+
+Manually running the steps of Dockerfile_redis
+    TTY1                            TTY2
+    #docker run -it alpine sh       #docker ps
+        #apk add --update redis     #docker commit -c 'CMD ["redis-server"]' <containerid of alpine>
+                                    #docker run <imageid from previous command>
