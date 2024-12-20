@@ -13,6 +13,7 @@ On Linux you may see the imageid at the end of the output
 On Windows Docker Desktop, cli will return build-id at the end. We cant use it with docker run
 Check the GUI build page and image page. Copy the imageid and do docker run with it.
     #docker run <image-id>
+    #docker run betzdockz/myredis
 At each command in the Dockerfile,
     Docker runs a temp container 
         using the temp image from output of previous command (Exception for for first command ie FROM)

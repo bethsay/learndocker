@@ -1,0 +1,15 @@
+We sill run a nodejs webpage displaying any text.
+If it wasnt for docker you will have to install nodejs on your laptop and every host that you want to test or run your webpage.
+For this project dev need package.json to define dependencies and index.js for webpage content. Check simple_project folder
+Create dockerfile in project folder to fetch compatabile image + copy web files into container FS + RUN webpage
+    #docker build -t betzdockz/mynpmwebpage .
+    #docker run betzdockz/mynpmwebpage
+The webpage is listening on 8080 and should be accessible in browser when you call localhost:8080.
+But the host machine is not aware of it.
+Perform port mapping to connect some hostport to containerport with -p
+    #docker run -p 323232:8080 betzdockz/mynpmwebpage
+Now check browser with localhost:8080.
+Anytime we make any change in index.js, or package.js or Dockerfile, we should
+    #docker build -t betzdockz/mynpmwebpage .
+    #docker run -p 323232:<app.listen.port> betzdockz/mynpmwebpage
+Practice by modifying the app.get and app.listen in index.js file
