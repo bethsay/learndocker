@@ -1,0 +1,60 @@
+docker-compose allows us to manage(start/stop/build) multiple containers easily.
+docker-compose allows networking between a batch of containers.
+
+We are going to have an app to count number of visitors to our website.
+redis will hold the count of visitors, running on container1. Image from docker hub will be used
+website will be by nodejs code, running on container2. Custom image with docker build
+-package.json to define dependencies. any version of express. 2.8.0 version of redis client 
+-index.js for webpage. 
+---redis-client configured with redis-server and port. 
+---visitor counter fetched from redis-server and displayed on webpage.
+---Error testing
+---nodejs listing port is also defined here
+
+Create docker-compose in porject folder
+    #vim docker-compose.yml
+Define docker compose version
+    ->version: '3'
+Define both containers with their service-name, image to be pulled or build, list of host-container port mapping and other properties
+    ->services:
+    ->  redis-server:
+    ->    image: 'redis'
+    ->  node-app:
+    ->    build: .
+    ->    ports:
+    ->      - "32323:8081"
+Save and exit.
+
+Just as <#docker build .> requires dockerfile,
+All docker-compose commands reuires docker-compose.yml in pwd.
+To run the config in docker-compose.yml
+    #docker-compose up
+    #docker-compose up -d
+Open browser http://localhost:32323. Repeatedly reload the page.
+If you make changes to index.js or any file in pwd,
+    #docker-compose up -d --build
+Check status of items defined yml. This wont work if you cd to different path
+    #docker-compose ps
+    #docker ps
+    #cd ..
+    #docker-compose ps
+    #docker ps
+ To stop items defined in yml
+    #docker-compose down
+
+To add resiliance to the services, define restart in docker-compose.yml.
+    ->services: node-app: restart: always
+Default restart policy is no. You can change it to always, on-failure, or unless-stopped
+Edit index.js. 
+-Enable L3, ie const process = require('process');
+-Enable L13,ie process.exit(0);
+Rebuild
+    #docker-compose up --build
+Reload URL and check cli response.
+Edit index.js.
+-Modify L13,to process.exit(1);
+Rebuild
+    #docker-compose up --build
+Reload URL and check cli response.
+Repeat excercise with different restart policy in docker-compose.yml
+    ->services: node-app: restart: on-failure

@@ -6,14 +6,21 @@ In the Dockerfile, specify base-image + run installation of dependencies + start
     #CMD <startup command>
 Copy the sample mydockerfiles/Dockerfile_redis as Dockerfile and build it
     #docker build .
-    #docker build -t <dockerid/projectname:version> .
-    #docker build -t betzdockz/myredis:latest .
 On Linux you may see the imageid at the end of the output
     #docker run <image-id>
 On Windows Docker Desktop, cli will return build-id at the end. We cant use it with docker run
 Check the GUI build page and image page. Copy the imageid and do docker run with it.
     #docker run <image-id>
-    #docker run betzdockz/myredis
+    #docker image ls
+Better than working with container-id and image-id is to tag/name them while creating
+Tag your docker image
+    #docker build -t <repository:tag> .                 #Syntax
+    #docker build -t <dockerid/projectname:version> .   #Tagging Standard
+    #docker build -t betzdockz/myredis:latest .         #Example
+Name your docker container
+    #docker run --name <containername> <imagetag>       #Syntax
+    #docker run --name myredis betzdockz/myredis        #Example
+    #docker run -d --name myredis betzdockz/myredis     #Keep running container in background. -d means detach
 At each command in the Dockerfile,
     Docker runs a temp container 
         using the temp image from output of previous command (Exception for for first command ie FROM)
