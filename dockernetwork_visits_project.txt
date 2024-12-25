@@ -1,0 +1,35 @@
+We are going to have an app to count number of visitors to our website.
+Container_1 : redis will hold the count of visitors. Image from docker hub will be used
+Container_2 : website will be nodejs code. Custom image with docker build
+            -package.json to define dependencies. express framework any version. redis client v2.8.0
+            -index.js for webpage.
+                -redis-client configured with redis-server and port. 
+                -visitor counter fetched from redis-server and displayed on webpage. Counter is updated here itself
+                -nodejs listing port is also defined here
+Network : allow data trafer bwtween containers
+
+Docker has default bridge network. All containers will be linked by this.
+If you require a working network bwtween containers do not use default bridge.
+Create network for our visits_project
+    #docker network ls
+    #docker network create visits_network
+    #docker network ls
+All container that need to communicate with each other should be configured to use with visits_network.
+Deploy Redis container in visits_network with the name visits_backend. redis image will be pulled from dockerhub if you dont hav it locally
+    #docker run -d --name visits_backend --network visits_network redis
+Similar to simple_project, we have the package.json and index.js prepared.
+The dockerfile has the instruction on using these files.
+Build the frontend image using the dockerfile
+    #docker build -t betzdockz/visitsfrontend ./
+Deploy a temp container (--rm will delete/remove container once its stopped) within the visits_network and see if any runtime errors happen.
+    #docker run --rm --network visits_network betzdockz/visitsfrontend.
+If everything looks good, --name the container, setup portmapping (-p), and run in background (-d)
+    #docker run -d -p 32323:8081 --name visits_frontend --network visits_network betzdockz/visitsfrontend
+Open browser and check http://localhost:32323/.
+Reload the page and you should see the counter incrementing for each reload.
+To see the containers linked with your network, check the containerblock in 
+    #docker inspect visits_network
+
+Once your done, do a clean up
+    #docker stop visits_frontend visits_backend
+    #docker system prune -a --volumes

@@ -1,9 +1,8 @@
-version: '3'
 services: 
-  redis-server:
+  visits_backend:
     image: 'redis'
-  node-app:
+  visits_frontend:
     restart: always
-    build: .
+    build: ./
     ports:
       - "32323:8081"

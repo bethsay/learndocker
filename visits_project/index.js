@@ -4,8 +4,8 @@ const redis = require('redis');
 
 const app = express();
 const client = redis.createClient({
-  host: 'redis-server', //redis service name as per docker-compose.yml. In a non-docker setup, IP/hostname/url of redis server must be defined.
-  port: 6379            //default redis port. can be skipped
+  host: 'visits_backend', //redis service name as per docker-compose.yml. In a non-docker setup, IP/hostname/url of redis server must be defined.
+  port: 6379              //default redis port. can be skipped
 });
 client.set('visits', 0); //starting value of counter
 

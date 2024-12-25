@@ -30,10 +30,14 @@ Working with the names you define would be easier that with the names and id def
 	#docker create --name my_echo-box busy-box echo whats up
 	#docker create --name my_ping-box busy-box ping google.com
 	#docker start -a <container-name>
-Recover storage from dead/stopped containers
+Recover storage from stopped containers that wont be used again,
 	#docker ps --all
+	#docker rm <container1> <container2>
+	#docker image ls
+	#docker image rm <image1> <image2>
 	#docker system prune
-	#docker ps --all
+	#docker system prune -a --volumes
+	#docker ps -a
 See what live containers are doing.
 	#docker logs <id>
 Stop running containers
