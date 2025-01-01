@@ -1,0 +1,19 @@
+4 phases for this npm react project : PREP , DEV , TEST , PROD
+PROD phase
+==================================================================================================================
+We will not have a any npm process running in prod.
+npm start runs a dev server to allow us to see what we are making.
+npm test runs a test suite to make sure no faults are present after developing.
+nginx the web server will serve the html and js assests/files.
+Once app is prod ready, no changes are allowed. So no more mount binding
+#npm build will create folder /build and load it with all static files/assests that can be hosted by webserver.
+nginx image in docker hub has no dependencies and doesnt need require startup command
+Create Multi-stage dockerfile.Since this is our last/prod dockerfile for this excercise, we will use default name.
+->build_stage : Pull node image, do npm install using package.json from laptop, then use our code from laptop, then run npm build on it
+->prod_stage : pull nginx image, copy files from created by npm build
+    #docker build -t betzdockz/myreact_app ./
+    #docker run --rm -p 80:80 -name react_app-prod betzdockz/myreact_app
+Multi-stage docker files allow you to build any one stage using --target.
+If you wish to see the contents of build/ before it was copied to nginx
+    #docker build -t betzdockz/myreact_app:npmbuild --target build_stage ./
+    #docker run -it --rm --name react_app-prod betzdockz/myreact_app:npmbuild sh

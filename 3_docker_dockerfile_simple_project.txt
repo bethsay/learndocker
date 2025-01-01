@@ -9,9 +9,16 @@ Create dockerfile in project folder to fetch compatabile image + copy web files 
 The webpage is listening on 8080 and should be accessible in browser when you call localhost:32323.
 But the host machine is not aware of it.
 Perform port mapping to connect some hostport to containerport with -p
-    #docker run -p 323232:8080 --name npmwebpage betzdockz/mynpmimage
+Delete container as soon as it stops running with --rm
+    #docker run --rm -p 32323:8080 --name npmwebpage betzdockz/mynpmimage
+If you get port not availble error on Windows,
+    -> Check Resource monitor is any process is using that port. If it is, then use some other port.
+    -> WinNAT migh be reserving the port.
+        -> Open cmd was admin. Run the command "net stop winnat"
+        -> Do docker run from bash
+        -> Do "net start winnat" from cmd
 Now check browser with localhost:8080.
 Anytime we make any change in index.js, or package.js or Dockerfile, we should repeat the build
 Practice by modifying the content, ie app.get, and port, ie app.listen, in index.js file
     #docker build -t betzdockz/mynpmimage ./
-    #docker run -p 323232:<app.listen.port> --name npmwebpage betzdockz/mynpmimage
+    #docker run --rm -p 32323:<app.listen.port> --name npmwebpage betzdockz/mynpmimage

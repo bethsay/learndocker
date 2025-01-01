@@ -1,0 +1,58 @@
+4 phases for this npm react project : PREP , DEV , TEST , PROD
+DEV phase
+==================================================================================================================
+Now that we have our code. Lets run it and see what we get
+Contents will be same as previous projects.
+    #vim dockerfile.dev
+    #docker build -t betzdockz/myreact_app-dev -f dockerfile.dev ./
+    #docker run --rm -p 3000:3000 --name react_app-dev betzdockz/myreact_app-dev
+When docker builds this image,
+package.json lists the dependency needed, and npm install would use it.
+This step creates the node_modules dir and its contents. node_modules takes up 99% project storage. 
+    #rm -rf node_modules package-lock.json
+    #docker build -t betzdockz/myreact_app-dev -f dockerfile.dev ./
+    #docker run --rm -p 3000:3000 --name react_app-dev betzdockz/myreact_app-dev
+On browser check http://loclhost:3000/
+
+Slow dev :  Lets make changes. Edit the src/App.js file. Add more <p> blocks
+            To see the change, you would need to repeat docker build and docker run each time.
+Fast dev :  Bind Mount can be setup to mirror laptop local files into docker.
+            This makes you faster by just having to switch between VScode and browser. skip running and waiting in bash.
+            Bind mount can be done with --mount flag or --volume/-v
+            Since this excercise was done on Windows, WATCHPACK_POLLING=true need to set in a .env within react_project
+    #docker run --mount type=bind,src=<host-path>,dst=<container-path>          #Syntax
+    #docker run --volume <host-path>:<container-path>                           #Syntax
+Since this excercise was done in Windows you would have to troubleshoot the path formatting. The below command worked
+    #docker run --rm -p 3000:3000 -v "//c/Users/beths/OneDrive/Documents/learndocker/react_project":/opt/react_project --name react_app-dev betzdockz/myreact_app-dev
+If you are doing this excercise in Linux, hopefully the command is simpler as below
+    #docker run --rm -p 3000:3000 -v $(pwd):$(pwd) --name react_app-dev betzdockz/myreact_app-dev
+You will get a run failure.
+This is because node_modules directory, which was present in the myreact_app-dev image, gets deleted when you perform volume binding.
+Docker volumes will allow any data to persist a docker stop, docker rm, and volume mounting (mount binding). 
+Lets create a volume for node_modules
+    #docker volume create node_modules          # This can be skipped as docker run can create volumes along with container
+    #docker volume ls
+Now we map the path /opt/react_project/node_modules to this volume using docker run
+    #docker run --rm -p 3000:3000 -v node_modules:/opt/react_project/node_modules -v "//c/Users/beths/OneDrive/Documents/learndocker/react_project":/opt/react_project --name react_app-dev betzdockz/myreact_app-dev
+Now modify <p> blocks in src/App.js, save it and browser will reflect.
+We can convert this long docker run to docker-compose.yml
+    #vim docker-compose.yml
+    ->services: dev: build: context: ./
+    ->services: dev: build: dockerfile: dockerfile.dev
+    ->services: dev: volumes: - ./:/opt/react_project
+                              - node_modules:/opt/react_project/node_modules
+    ->volumes: node_modules: external: true
+build context specifies the path of all items needed by dockerfile.dev. dockerfile.dev is also specified as it is not default name
+The volumes under services specifies all the volume for mounting and persistant volume. 
+The volumes block specifies the volume to be used by docker-compose. 
+-Exclude "external: true" to allow the 1st docker-compose up to create react_project-node_modules. All subsequent docker compose will reuse volume.
+-Include "external: true" in senario where there exists content in node_modules to be reused prior to creating docker-compose.yml
+node_modules could be made persistant by using anonymous volumes. Here docker will name the volume using hash code
+    ->services: dev: volumes: - ./:/opt/react_project
+                              - /opt/react_project/node_modules
+with anonymous volumes, you can skip the entire volumes: block (L81 above) in docker-compose.yml.
+but this would allow for duplication or same content, and would risk getting deleted by the admins.
+    #docker-compose config
+This command verifies your docker-compose file
+    #docker-compose up
+    #docker-compose down

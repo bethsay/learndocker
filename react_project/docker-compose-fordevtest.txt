@@ -1,0 +1,21 @@
+services:
+  dev:
+    build:
+      context: ./
+      dockerfile: dockerfile.dev
+    ports:
+      - 3000:3000
+    volumes:
+      - ./:/opt/react_project
+      - node_modules:/opt/react_project/node_modules
+  test:
+    build:
+      context: ./
+      dockerfile: dockerfile.dev
+    command: npm test
+    volumes:
+      - ./:/opt/react_project
+      - node_modules:/opt/react_project/node_modules
+volumes:
+  node_modules:
+    external: true

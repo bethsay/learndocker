@@ -1,0 +1,37 @@
+4 phases for this npm react project : PREP , DEV , TEST , PROD
+PREP phase
+==================================================================================================================
+We want to generate a React project using npm.
+Without docker (Hypothetically)
+    ->Search "node download" on google.
+    ->go to nodejs.org website. Download the LTS Windows installed of Nodejs.
+    ->Install it. Close all running cli terminals and open them again
+    #node -v
+    #npm install -g create-react-app
+    #create-react-app react_project
+    ->This will genereate all project files within the react_project.
+    ->This project directory will contain the package.json and app.js that will do our dev work on.
+Since this is just a onetime excercise, I dont want to these prerequisites to be permanantly present on my laptop.
+Using docker
+    #docker run -itd --rm --name throwaway_node node:alpine
+the throwaway container will be deleted when stopped(--rm). it will run in background, ie detatched mode (-d)
+if -i or -t flag is not included, the container will start, run, stop and get deleted
+    #docker ps
+    #docker exec -it throwaway_node sh
+        #cd opt/
+        #node -v
+        #npx create-react-app react_project
+    npx would do the same as thing as the L10+L11 npm commands mentioned above.
+    npx would fail due to dependency conflict.
+    error message said npm install with package with outdated version.
+    fixed it by removing version number
+        #cd react_project
+        #npm install --no-audit --save @testing-library/jest-dom @testing-library/react @testing-library/user-event web-vitals
+    Next step would be to copy. As you would see in below lines L36 and L46-L50, node_modules is too large.
+        #rm -rf node_modules package-lock.json
+        #exit
+Now we copy all this code into our laptop
+    #docker cp <container_id>:<src_path> <dest_path>        #Syntax
+    #docker cp <src_path> <container_id>:<dest_path>        #Syntax
+    #docker cp throwaway_node:/opt/react_project ./
+This same command can also be used to copy files from your laptop to any container.

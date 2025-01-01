@@ -25,6 +25,7 @@ Deploy a temp container (--rm will delete/remove container once its stopped) wit
     #docker run --rm --network visits_network betzdockz/visitsfrontend.
 If everything looks good, --name the container, setup portmapping (-p), and run in background (-d)
     #docker run -d -p 32323:8081 --name visits_frontend --network visits_network betzdockz/visitsfrontend
+If you get port not availble error on Windows, do "net stop winnat" and "net start winnat"
 Open browser and check http://localhost:32323/.
 Reload the page and you should see the counter incrementing for each reload.
 To see the containers linked with your network, check the containerblock in 

@@ -1,5 +1,5 @@
 docker-compose allows us to manage(start/stop/build) multiple containers easily.
-docker-compose allows networking between a batch of containers.
+docker-compose, by default, will create networking between the declared containers/services.
 
 We will redo the visits_project with docker-compose.
 We will also be performing Error testing to learn container resiliance
@@ -18,7 +18,10 @@ Save and exit.
 
 Just as <#docker build .> requires dockerfile,
 All docker-compose commands reuires docker-compose.yml in pwd.
-To run the config in docker-compose.yml
+Test your config present in docker-compose.yml
+    #docker-compose config
+You should see in output a block called networks: even through you didnt create it.
+To run docker-compose.yml
     #docker-compose up
     #docker-compose up -d
 Open browser http://localhost:32323. Repeatedly reload the page.

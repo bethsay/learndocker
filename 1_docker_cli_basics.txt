@@ -1,4 +1,4 @@
-Udemy Dcoker and k8s
+Udemy Docker and k8s
 Docker image = FileSystem Snapshot + a startup command
 	Filesystem contains all required dependencies and configuration of docker image
 Every Docker container is isolated by default. This is achived by the linux keral features/concepts of Namespace + cgroup
@@ -45,7 +45,7 @@ Stop running containers
 	#docker start <id>
 	#docker kill <id>
 Interact with live containers and/or run containers with additional-startup-commands. additional-startup-commands is mandatory
-	#docker exec -it <id> <additional-startup-commands> || -i=attach STDIN of terminal with STDIN -t=enable container specific prompt(bash,psql,rediscli,#,$,>)
+	#docker exec -it <id> <additional-startup-commands> || -i=attach STDIN of terminal with STDIN of container -t=enable container specific TTY(bash,psql,rediscli,#,$,>)
 	#docker exec -it <id> sh 
 	#docker exec -it <id> bash
 	#docker run redis
@@ -53,11 +53,11 @@ Interact with live containers and/or run containers with additional-startup-comm
 		#set myvariable 12
 		#get myvariable
 	#docker ps
-	#docker exec -it <id> redis-cli || Try this without -t
+	#docker exec -it <id> redis-cli || Try this again without -t
 		#set myvariable 23  || These 2 commands will work
 		#get myvariable
 	#docker exec -it <id> sh
 		#redis-cli 			|| These 3 commands will work
 		#set myvariable 44
 		#get myvariable
-	docker run -it busy-box sh || This will open interactive shell but at the cost of running the default startup command.
+	#docker run -it busy-box sh || This will open interactive shell but at the cost of running the default startup command.

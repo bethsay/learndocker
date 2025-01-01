@@ -1,0 +1,35 @@
+4 phases for this npm react project : PREP , DEV , TEST , PROD
+TEST phase
+==================================================================================================================
+After you are done developing/playing, we test the app.
+We can skip all the fast dev / volume persistance / volume mounting.
+use image betzdockz/myreact_app-dev itself but override "npm start" with "npm test".
+    #docker run -it --rm --name react_app-test betzdockz/myreact_app-dev npm test
+The test be run and container will be stop. Using watchAll flag with test will make it interactive.
+    #docker run -it --rm --name react_app-test betzdockz/myreact_app-dev npm test -- --env=jsdom --watchAll
+        ->Enter             #to re-run
+        ->w                 #to show usage options.     #might not work
+        ->p ->app.test.js   #to run tests from file. npm will do autocomplete/regex-match for each letter
+        ->t                 #to run a test method/function, regex-match availble
+        ->q                 #to quit. this will stop container
+we can add these flags into scripts section within package.json.
+    #vim package.json
+        ->{scripts {"test": "react-scripts test --env=jsdom --watchAll"}}
+If we had a running container with volume mounting we could have skipped docker build.
+Edit src/App.test.js to add/remove test cases. Copy test() block or it() block and paste it in same file.
+We could reuse dev container service for test. Here we use same container to see live changes in both dev and test
+    #docker-compose up -d --build           #run in background with npm start
+    #docker exec -it react_project-dev-1 npm test
+        ->Enter         #to re-run
+Rerun test everytime changes are made to src/App.test.js by pressing Enter on keyboard. 
+Observe change in number of Tests in outputs. Once you are done, run
+    #docker-compose down
+We could also have service: test: declared in docker-compose.yml exclusivly for this phase. This is good for running no more than 1 test
+    #docker-compose.yml
+        ->service: test: build: ##copy from service dev
+        ->service: test: command: [ "npm", "test" ]
+        ->service: test: volume: ##copy from service dev
+If we use anonymous volumes in dev, and test, we would have duplication of same content within different volumes.
+    #docker-compose up --build
+In this option we will witness live detecion of src/App.js by dev-1 service. We will see compiled successfully log message in bash/terminal and see live changes in browser.
+But even thought test-1 service observes changes to src/App.test.js. We cannot use p/t/Enter/q to interact.

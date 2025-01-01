@@ -1,0 +1,9 @@
+# Define Base.
+FROM node:alpine
+WORKDIR /opt/react_project
+COPY ./package.json ./
+# Install Dependency
+RUN npm install
+COPY ./ ./
+# Run Startup command
+CMD [ "npm", "start" ]
