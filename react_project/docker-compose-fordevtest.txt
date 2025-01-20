@@ -2,7 +2,7 @@ services:
   dev:
     build:
       context: ./
-      dockerfile: dockerfile.dev
+      dockerfile: Dockerfile.dev
     ports:
       - 3000:3000
     volumes:
@@ -11,8 +11,8 @@ services:
   test:
     build:
       context: ./
-      dockerfile: dockerfile.dev
-    command: npm test
+      dockerfile: Dockerfile.dev
+    command: npm test -- --watchAll
     volumes:
       - ./:/opt/react_project
       - node_modules:/opt/react_project/node_modules

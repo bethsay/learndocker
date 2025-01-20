@@ -35,3 +35,11 @@ Now we copy all this code into our laptop
     #docker cp <src_path> <container_id>:<dest_path>        #Syntax
     #docker cp throwaway_node:/opt/react_project ./
 This same command can also be used to copy files from your laptop to any container.
+During dev stage, react_project files will be modified.
+To get a copy of the original files, we will create image from this live container.
+Then run this image to view or copy the original files
+    #docker commit <container_id> <image_name>              #Syntax
+    #docker commit throwaway_node betzdockz/vanilla_react
+    #docker stop throwaway_node
+    #docker run -it --rm --name throwaway_node betzdockz/vanilla_react sh
+You can now view or copy file of the container, then stop and delete once you are done

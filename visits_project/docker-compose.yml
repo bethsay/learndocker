@@ -1,7 +1,7 @@
 services: 
-  visits_backend:
+  backend:
     image: 'redis'
-  visits_frontend:
+  frontend:
     restart: always
     build: ./
     ports:
