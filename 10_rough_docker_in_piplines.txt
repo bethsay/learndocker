@@ -1,0 +1,97 @@
+***||||Stop and delete all AWS resources created for this||||*****
+
+create github repo, send react_project to it
+create CI pipline to
+    watch for change in repo
+	test code
+	deploy code to Prod if test passed
+
+Sample config of travis is added as reference. Do this using Github Action or Jenkins
+Github to Travis or Jenkins is requrird. Steps for that isnt listed
+#vim .travis.yml
+sudo: required
+services:
+	- docker
+before_install:
+	- docker build -t betzdockz/myreact_app-dev -f ./react-project/Dockerfile.dev ./react-project
+script:
+	- docker run --rm --name react_app-test betzdockz/myreact_app-dev npm test -- --coverage
+if you see test failure, you may need to docker run -e CI=true or put it in the .env file
+
+Sample config of Github Action	
+#vim .github/workflows/hello_world.yml
+name : hello world
+'on': push
+jobs:
+	my-job:
+		runs-on: ubuntu-latest
+		steps:
+			name: my-steps
+			run: echo "Hello-world"
+
+Another Sample of Github Action
+#vim .github/workflows/build_test_push.yml
+name: push to docker hub
+on: workflowdispatch
+jobs:
+	publish_image:
+		runs-on: ubuntu-latest
+		steps:
+			- name : checkout
+			  uses : actions/checkout@v4
+			- name : build image
+			  run : docker build ./react-project -t betzdockz/myreact_app-dev:0.1
+			- name : push to dockerhub
+			  run : docker push betzdockz/myreact_app-dev:0.1
+This would fail because my github isnt autorised to my dockerhub
+			- name : push to dockerhub
+			  run : |
+				docker login -u betzdockz -p $secrets.GITHUB_DOCKERHUB_TOKEN
+				docker push betzdockz/myreact_app-dev:0.1
+AFter seeing this working successfully with button, change trigger to on push
+on:
+	push:
+		branch: main
+		path: 
+			- 'react-project/Dockerfile.dev'			
+
+Another Sample of Github action can be found here https://github.com/docker/build-push-action
+
+Create Elastic Beanstalk app with Web server env using docker platoform
+Continuing with Travis pipline, 
+#vim travis.yml
+sudo: required
+services:
+before_install:
+script:
+deploy:
+	edge: true	#optional
+	provider: elasticbeanstalk
+	region: "us-west-2"
+	app: react-project
+	env: "react-project-env"
+	bucket_name: s3-name-created-elasticbeanstalk
+	bucket_path: react-project
+	on:
+		branch: main
+	access_key_id: #IAM_ID
+	secret_access_key: $IAM_SECRET		
+Get IAM access id and key to perform deploy and create env variables in travis.
+Push this yml file to github and travis will run it.
+FYI Dockerfile will be used in deploy phase.
+Even if deploy is successful, we will not see our react-app because port mapping was not done.
+#vim Dockerfile
+FROM nginx AS prod_stage
+EXPOSE 80
+COPY --from=build_stage /opt/react_project/build /usr/share/nginx/html
+Push this to github
+this EXPOSE line will work in manual deployment only if you use docker run -P. If you didnt specify EXPOSE, -P will expose all ports anyways
+According to docker docs, EXPOSE is used only as comments to whoever is performing the deploy cuz it have no effect when doing docker build or run
+
+Create new github branch frontpage, make changes to App.js, commit and git push origin frontpage
+#gh pr create
+CI will trigger checks or git push or npm test. i dont know
+Once reviewed and merged to main, travis will redeploy to EBS
+After successful builds, tests and deploys are observed,
+
+***||||Stop and delete all AWS resources created for this||||*****

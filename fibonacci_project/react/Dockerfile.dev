@@ -1,6 +1,6 @@
 # Define Base.
 FROM node:alpine
-WORKDIR /opt/react_project
+WORKDIR /opt/fibonacci_react
 COPY ./package.json ./
 # Install Dependency
 RUN npm install

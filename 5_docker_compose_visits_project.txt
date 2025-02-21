@@ -7,17 +7,11 @@ We will also be performing Error testing to learn container resiliance
 Create docker-compose in project folder
     #vim docker-compose.yml
 Define both containers with their service-name, image to be pulled or build, list of host-container port mapping and other properties
-    ->services:
-    ->  visits_backend:
-    ->    image: 'redis'
-    ->  visits_frontend:
-    ->    build: ./
-    ->    ports:
-    ->      - "32323:8081"
-Save and exit.
+    ->services: backend: image: 'redis'
+    ->services: frontend: build: ./
+    ->services: frontend: ports: - "32323:8081"
 
-Just as <#docker build .> requires dockerfile,
-All docker-compose commands reuires docker-compose.yml in pwd.
+All docker-compose commands requires docker-compose.yml in pwd.
 Test your config present in docker-compose.yml
     #docker-compose config
 You should see in output a block called networks: even through you didnt create it.
@@ -42,13 +36,13 @@ This can also be used with docker run. Just add the --restart flag
     ->services: visits_frontend: restart: always
 Default restart policy is "no". You can change it to always, on-failure, or unless-stopped
 Edit index.js. 
--Enable L3, ie const process = require('process');
--Enable L13,ie process.exit(0);
+->Enable L3, ie const process = require('process');
+->Enable L13,ie process.exit(0);
 Rebuild
     #docker-compose up --build
 Reload URL and check cli response.
 Edit index.js.
--Modify L13,to process.exit(1);
+->Modify L13,to process.exit(1);
 Rebuild
     #docker-compose up --build
 Reload URL and check cli response.

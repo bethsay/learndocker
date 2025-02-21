@@ -1,0 +1,69 @@
+services:
+  postgres:
+    image: 'postgres'
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_PASSWORD=dummy_password
+      - POSTGRES_USER=fake_user
+      - POSTGRES_DB=fake_database
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready"]
+      interval: 10s
+      retries: 5
+      start_period: 30s
+      timeout: 10s
+  redis:
+    image: 'redis'
+    volumes:
+      - redisdata:/data
+  nginx:
+    build:
+      context: ./nginx
+      dockerfile: Dockerfile.dev
+    depends_on:
+      - react
+      - express
+    restart: always
+    ports:
+      - '8080:80'
+  react:
+    build:
+      context: ./react
+      dockerfile: Dockerfile.dev
+    volumes:
+      - node_modules:/opt/fibonacci_react/node_modules
+      - ./react:/opt/fibonacci_react
+  express:
+    build:
+      context: ./express
+      dockerfile: Dockerfile.dev
+    depends_on:
+      postgres:
+        condition: service_healthy
+        restart: true
+    volumes:
+      - node_modules:/opt/finonacci_express/node_modules
+      - ./express:/opt/finonacci_express
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - PGHOST=postgres
+      - PGPORT=5432
+      - PGDATABASE=fake_database
+      - PGUSER=fake_user
+      - PGPASSWORD=dummy_password
+  worker:
+    build:
+      context: ./worker
+      dockerfile: Dockerfile.dev
+    volumes:
+      - node_modules:/opt/finonacci_worker/node_modules
+      - ./worker:/opt/finonacci_worker
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+volumes:
+  node_modules:
+  pgdata:
+  redisdata:

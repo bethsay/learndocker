@@ -1,0 +1,29 @@
+services:
+  DinD:
+    image: docker:dind
+    privileged: true
+    environment:
+      - DOCKER_TLS_CERTDIR=/certs
+    ports:
+      - 2376:2376
+    volumes:
+      - data:/var/jenkins_home
+      - certs:/certs/client
+      - dind:/var/lib/docker
+  app:
+    build: ./
+    restart: on-failure
+    environment:
+      - DOCKER_HOST=tcp://docker:2376
+      - DOCKER_CERT_PATH=/certs/client
+      - DOCKER_TLS_VERIFY=1
+    ports:
+      - 8080:8080
+      - 50000:50000
+    volumes:
+      - data:/var/jenkins_home
+      - certs:/certs/client
+volumes:
+  data:
+  certs:
+  dind:
