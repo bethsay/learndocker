@@ -1,0 +1,111 @@
+Now that code for fibonacci_project has is available, we will create dockerfiles for each component to run them.
+
+Create Dockerfile.dev within fibonacci_project/react/ to build react component
+Use the same Dockerfile.dev from previous react_project, and update workdir.
+Create Dockerfile.dev within fibonacci_project/express/ and fibonacci_project/worker/
+Use the same Dockerfile.dev as in react. Update the workdir and use the startup cmd as "npm run dev".
+Create Dockerfile.dev within fibonacci_project/nginx/ with base image nginx and overwrite its /etc/nginx/conf.d/default.conf with our custom default.conf
+
+Postgres and redis are needed but lets test the build and run of these 3 componenets.
+We could navigate in and out of each component folders and perform docker build and run,
+Or specify build context while performing build and run. This is preffered for multi-container docker applications.
+    #cd fibonacci_project
+    #docker build -t betzdockz/fib-worker-test -f worker/Dockerfile.dev ./worker
+    #docker build -t betzdockz/fib-express-test -f express/Dockerfile.dev ./express
+    #docker build -t betzdockz/fib-react-test -f react/Dockerfile.dev ./react
+We used local path as build context for these componenets. docker allows using tarballs, gitrepos, and textfiles, whcih could be remote or local, as build context.
+If successful proceed to run these. We will skip port mapping, volume mounting and bind mounting.
+    #docker run --rm --name fib-worker-test betzdockz/fib-worker-test
+    #docker run --rm --name fib-express-test betzdockz/fib-express-test
+    #docker run --rm --name fib-react-test betzdockz/fib-react-test
+If no errors, lets cleanup.
+    #docker image rm betzdockz/fib-worker-test betzdockz/fib-express-test betzdockz/fib-react-test
+
+Now we build the docker-compose.yml for postgres and redis.
+    #cd fibonacci_project/
+    #vim docker-compose.yml
+    ->services: postgres: image: 'postgres'
+    ->services: redis: image: 'redis'
+Lets test the config. The command "docker-compose" was V1 and "docker compose" is V2. Lets opt out of V1
+    #docker compose config
+We can choose to build and run any one of the services in docker-compose.yml or all
+    #docker compose up <service_name>           #Syntax. service_name is optional
+    #docker compose up redis
+    #docker compose up postgres
+    #docker compose up
+You will see that postgres fails and exits with error message "superuser password is not specified".
+Google best practices for postgres using docker and redis using docker. 
+Now update docker-compose.yml with volume persistance and file containing environment variables. 
+    #cd fibonacci_project/
+    #vim postgres_env.key
+    ->env_1=value_1
+    ->env_2=value_2
+    ->env_3=value_3
+    #vim docker-compose.yml
+    ->services: postgres: volumes: - pgdata:/var/lib/postgresql/data
+    ->services: postgres: env_file: - postgres_env.key
+    ->services: redis: volumes: - redisdata:/data
+    ->volumes: pgdata:
+    ->volumes: redisdata:
+    #docker compose config
+    #docker compose up --build
+Once you see "ready to accept connections" from redis and postgres, lets add react, express and worker to docker-compose.yml.
+Specify build context, dockerfile wrt to context, persistant volumes for node_modules and bind mounts for the component_code.
+Also express and worker require the details of redis and postgres to be passed as environment variable.
+    #cd fibonacci_project/
+    #vim express_env.key
+    ->redis and postgres variables expected by fibonacci_project/express/keys.js
+    #vim docker-compose.yml
+    ->services: react: build: context: ./react
+    ->services: react: build: dockerfile: Dockerfile.dev
+    ->services: react: volumes: - react_node_modules:/opt/fibonacci_react/node_modules
+                                - ./react:/opt/fibonacci_react
+    ->services: express: build: context: ./express
+    ->services: express: build: dockerfile: Dockerfile.dev
+    ->services: express: volumes: - express_node_modules:/opt/fibonacci_express/node_modules
+                                  - ./express:/opt/fibonacci_express
+    ->services: express: env_file: - express_env.key
+    ->services: worker: build: context: ./worker
+    ->services: worker: build: dockerfile: Dockerfile.dev
+    ->services: worker: volumes: - worker_node_modules:/opt/fibonacci_worker/node_modules
+                                 - ./worker:/opt/fibonacci_worker
+    ->services: worker: env_file: - express_env.key
+    ->volumes: react_node_modules:
+    ->volumes: express_node_modules:
+    ->volumes: worker_node_modules:
+Test the config
+    #docker compose config
+    #docker compose up --build
+The app cannot be accessed on browser yet as reverse proxy is pending.
+    ->services: nginx: build: context: ./nginx
+    ->services: nginx: build: dockerfile: Dockerfile.dev
+    ->services: nginx: ports: - '8080:80'
+Now that all services are configured in docker-compose.yml lets run it and check the app.
+    #docker compose config
+    #docker compose up --build
+    ->On browser: http://localhost:8080/
+
+We can improve the docker-compose.yml by adding restart policies for the componenets
+    ->services: postgres: restart: unless-stopped
+    ->services: redis: restart: unless-stopped
+    ->services: nginx: restart: unless-stopped
+We can also define the startup and remove sequence of services wrt each other. Below is my preffered flow
+First postgres and redis, then worker and express, then react, at last nginx.
+    ->services: worker: depends_on: - redis
+    ->services: express: depends_on: - postgres
+                                     - redis
+    ->services: react: depends_on: - express
+    ->services: nginx: depends_on: - react
+                                   - express
+Here we used the short syntax form where the only requirement is service is started.
+We could use the long syntax form to ensure that a service passes a healthcheck as a condition to start another service.
+    ->services: postgres: healthcheck: test: ["CMD-SHELL", "pg_isready"]
+    ->services: postgres: healthcheck: interval: 10s                        #delay to run test after service start or after previous test
+    ->services: postgres: healthcheck: retries: 5                           #max consecutive test fails for this service to be unhealth.
+    ->services: postgres: healthcheck: start_period: 30s                    #max time allocated for retries to start count. if 1 test passes within in start_period, retries will start count.
+    ->services: postgres: healthcheck: timeout: 10s                         #max time to get success, after which its a failed test
+    ->services: express: depends_on: postgres: condition: service_healthy
+    ->services: express: depends_on: postgres: restart: true                #express will restart if postgres is restarted or redeployed
+    ->services: express: depends_on: redis: condition: service_started
+    #docker compose config
+    #docker compose up --build

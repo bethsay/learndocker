@@ -22,9 +22,9 @@ Observe change in number of Tests in outputs. Once you are done, run
     #docker-compose down
 We could also have service: test: declared in docker-compose.yml exclusivly for this phase. This is good for running no more than 1 test
     #docker-compose.yml
-        ->service: test: build: ##copy from service dev
-        ->service: test: command: npm test -- --watchAll
-        ->service: test: volume: ##copy from service dev
+    ->service: test: build: ##copy from service dev
+    ->service: test: command: npm test -- --watchAll
+    ->service: test: volume: ##copy from service dev
 If we use anonymous volumes in dev, and test, we would have duplication of same content within different volumes.
     #docker-compose up --build
 In this option we will witness live detecion of src/App.js by dev-1 service. We will see compiled successfully log message in bash/terminal and see live changes in browser.

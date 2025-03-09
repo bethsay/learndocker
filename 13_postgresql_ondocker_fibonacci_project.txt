@@ -1,0 +1,34 @@
+On the running postgres service of fibonacci_project, try out the below commands.
+POSTGRES contains the db "fibonacci" with the table "values" that stores list of index inputed by user in the column "numbers" .
+    #docker exec -it fibonacci_project-postgres-1 sh
+        #createuser -e <role_name> -P -U fib_user                                                                               #fib_user is the Superuser instead of postgres
+        #dropuser -e <role_name> -U fib_user
+        #createdb -e -O <role_name> <db_name> -U fib_user
+        #dropdb -e <db_name> -U fib_user
+        #psql -U fib_user -d fibonacci
+            #\conninfo
+            #SELECT rolname FROM pg_roles WHERE rolcanlogin IS true;  #\du    #\dg    #\du+   #\dg+                             #list roles
+            #SELECT datname FROM pg_database;    #\l     #\l+                                                                   #list databases, privilages and size
+            #CREATE ROLE <role_name> LOGIN PASSWORD '<password>';
+            #ALTER ROLE <role_name> <properties>;
+            #DROP ROLE <role_name>;
+            #CREATE DATABASE <db_name> WITH OWNER <role_name>;                                                                  #Avoid using superuser as pg_role
+            #SELECT 'CREATE DATABASE temp_db' WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = 'temp_db')\gexec        #query works without semicolon
+            #ALTER DATABASE <db_name> <properties>;
+            #\c     #\c <db_name>    #\c postgres                                                                               #connect to db_name
+            #DROP DATABASE <db_name>;
+            #CREATE TABLE <table_name> (<col_name_1> <DATATYPE> <rule>, <col_name_2> <DATATYPE> <rule>);
+            #CREATE TABLE IF NOT EXISTS values (number INT UNIQUE);
+            #\d     #\d+    #\dt    #\dt+                                                                                       #list tables
+            #SELECT * FROM pg_catalog.pg_tables WHERE schemaname != 'pg_catalog' AND schemaname != 'information_schema';        #list tables
+            #DROP TABLE <table_name>
+            #\d <table_name>  #\d+ values                                                                                       #describe the properties of table_name
+            #\z     #\dp                                                                                                        #describe the privilages on on all tables
+            #GRANT <ALL> ON <table_name> TO <role_name>;                                                                        #grant privilage on table_name
+            #GRANT <ALL> ON DATABASE <db_name> TO <role_name>;                                                                  #grant privilage on db_name
+            #SELECT <col_name_1>, <col_name_2> FROM <table_name>;                                                               #Syntax
+            #SELECT * from values ORDER BY number ASC ;
+            #INSERT INTO table(col1, col2) VALUES (dat1_col1,dat1_col2), (dat2_col1,dat2_col2), (dat3_col1,dat3_col2);          #Syntax. Spaces in query doesnt matter
+            #INSERT INTO values(number) VALUES(12),(19),(25) ON CONFLICT DO NOTHING;
+            #DELETE FROM table WHERE col IN (dat1, dat2);                                                                       #Syntax.
+            #DELETE FROM values WHERE number IN (12,19,25);

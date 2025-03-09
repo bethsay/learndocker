@@ -3,20 +3,20 @@ services:
     image: 'postgres'
     volumes:
       - pgdata:/var/lib/postgresql/data
-    env_file:
-      - postgres_env.key
+    environment:
+      - POSTGRES_PASSWORD=
+      - POSTGRES_USER=
+      - POSTGRES_DB=
     healthcheck:
       test: ["CMD-SHELL", "pg_isready"]
       interval: 10s
       retries: 5
       start_period: 30s
       timeout: 10s
-    restart: unless-stopped
   redis:
     image: 'redis'
     volumes:
       - redisdata:/data
-    restart: unless-stopped
   nginx:
     build:
       context: ./nginx
@@ -24,15 +24,13 @@ services:
     depends_on:
       - react
       - express
-    restart: unless-stopped
+    restart: always
     ports:
       - '8080:80'
   react:
     build:
       context: ./react
       dockerfile: Dockerfile.dev
-    depends_on:
-      - express
     volumes:
       - react_node_modules:/opt/fibonacci_react/node_modules
       - ./react:/opt/fibonacci_react
@@ -49,22 +47,27 @@ services:
     volumes:
       - express_node_modules:/opt/fibonacci_express/node_modules
       - ./express:/opt/fibonacci_express
-    env_file:
-      - express_env.key
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - PGHOST=postgres
+      - PGPORT=5432
+      - PGDATABASE=
+      - PGUSER=
+      - PGPASSWORD=
   worker:
     build:
       context: ./worker
       dockerfile: Dockerfile.dev
-    depends_on:
-      - redis
     volumes:
       - worker_node_modules:/opt/fibonacci_worker/node_modules
       - ./worker:/opt/fibonacci_worker
-    env_file:
-      - express_env.key
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
 volumes:
-  pgdata:
-  redisdata:
   react_node_modules:
   express_node_modules:
   worker_node_modules:
+  pgdata:
+  redisdata:

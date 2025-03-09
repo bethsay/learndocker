@@ -1,0 +1,65 @@
+Credits : https://github.com/StephenGrider/multi-docker
+
+Docker is used to run apps that have require multiple componenets.
+Lets create a complex project to calculate fibonacci value at a position/index requested by the user.
+Componenets: NGINX, REACT, EXPRESS, WORKER, REDIS, POSTGRES.
+
+POSTGRES contains the db "fibonacci" with the table "values" that stores list of index inputed by user in the column "numbers" .
+    #docker exec -it fibonacci_project-postgres-1 sh
+        #psql -U fib_user -d fibonacci
+            #CREATE TABLE IF NOT EXISTS values (number INT UNIQUE);
+            #\d     #\d+    #\dt    #\dt+
+            #SELECT * from values ORDER BY number ASC ;
+            #INSERT INTO values(number) VALUES(12),(19),(25) ON CONFLICT DO NOTHING;
+            #DELETE FROM values WHERE number IN (12,19,25);
+REDIS stores the index and its fibonacci value as feild:value pairs within a redis-hash, whose key is "values".
+    #docker exec -it fibonacci_project-redis-1 sh
+        #redis-cli
+            #HGETALL values
+            #HSET values 12 fib_12 19 fib_19 25 fib_25
+            #HDEL 12 19 25
+            #PUBSUB CHANNELS
+            ---TTY1---                                  ---TTY2---
+            #PUBLISH insert 12                          #SUBSCRIBE insert
+            #PUBLISH insert 19
+            #PUBLISH insert 25
+WORKER calculates the fibonacci value. 
+    ->Setup redis client to redis service.
+    ->Subscribe to the "insert" channel on redis. For every message on "insert" channel,
+        ->Run the recursive function fib(message). Here fibonacci value is calculated and returned.
+        ->Set redis-hash "values" with message:fib(message)
+EXPRESS processes api requests from react.
+    ->Listen on port 5000
+    ->Setup postgres client to the fibonacci database. Create the table "values" with a column "number".
+    ->Setup redis client to redis service.
+    ->when api GET /values/all is recieved, run pg query to select all data in "values" table. Filter the result and send as response.
+    ->when api GET /values/current is recieved, run redis command to getall feild:value pairs from "values" hash. Send the result as response.
+    ->when api POST /values is recieved, 
+        ->fetch "index" from message body.
+        ->run pg query to insert "index" into table "values".
+        ->run redis command to set "index":"empty" into the hash "values"
+        ->run redis command to publish the message "index" into the channel "insert"
+REACT serves the frontend webpages,
+    ->Listen on 3000
+    ->Create homepage by setting its route as "/", ie root path
+        ->Initialise the object state{} whose keys are an array seenIndexes[], an object values{}, and a string index''.
+            ->populate state.seenIndexes with response from GET /api/values/all
+            ->populate state.values with response from GET /api/values/current.
+        ->Display a form to collect index from user.
+            ->user types some value and clicks on submit.
+                ->state.index is set as value.
+                ->call POST /api/values/index with state.index as body.
+                ->clear data from state.index 
+        ->Display index history
+            ->process the data in state.seenIndexes for easy viewing and show on webpage.
+        ->Display list of calculated fibonacci values of indexes recieved
+            ->process the data in state.values
+    ->Create another webpage with some text, a link to homepage and set its route as "/otherpage"
+NGINX runs as reverse proxy which decides if traffic from browser should go to react or express.
+    ->listen on 80
+    ->if path of url starts with /api, 
+        ->rewrite url by removing /api.
+        ->forward traffic to express component
+    ->send all other traffic to react component
+    ->websocket error while found after accessing the app on browser. To fix it
+        ->if url starts with /sockjs-node, use proxy headers and versions recommended by nginx and forward traffic to react component.

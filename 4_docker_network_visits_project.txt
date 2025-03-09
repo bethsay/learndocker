@@ -15,7 +15,7 @@ Create network for our visits_project
     #docker network create visits_network
     #docker network ls
 All container that need to communicate with each other should be configured to use with visits_network.
-Deploy Redis container in visits_network with the name visits_backend. redis image will be pulled from dockerhub if you dont hav it locally
+Deploy Redis container in visits_network with the name visits_backend. redis image will be pulled from dockerhub if you dont have it locally
     #docker run -d --name visits_backend --network visits_network redis
 Similar to simple_project, we have the package.json and index.js prepared.
 The dockerfile has the instruction on using these files.

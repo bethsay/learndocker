@@ -1,0 +1,24 @@
+On the running postgres service of fibonacci_project, try out the below commands.
+REDIS stores the index and its fibonacci value as feild:value pairs within a redis-hash, whose key is "values".
+    #docker exec -it fibonacci_project-redis-1 sh
+        #redis-cli
+            #HGETALL <key_name>
+            #HGETALL values
+            #HSET <key_name> <feild_1> <value_1> <feild_2> <value_2> <feild_3> <value_3>
+            #HSET values 12 fib_12 19 fib_19 25 fib_25
+            #HGET <key_name> <feild>
+            #HGET values 12
+            #HMGET <key_name> <feild_1> <feild_2> <feild_3>
+            #HMGET values 12 19 25
+            #HKEYS <key_name>
+            #HKEYS values
+            #HVALS <key_name>
+            #HVALS values
+            #HDEL <feild_1> <feild_2> <feild_3>
+            #HDEL 12 19 25
+            #PUBSUB CHANNELS
+            ---TTY1---                                  ---TTY2---
+            #PUBLISH <channel_name> <message>           #SUBSCRIBE <channel_1> <channel_2> <channel_3>
+            #PUBLISH insert 12                          #SUBSCRIBE insert
+            #PUBLISH insert 19
+            #PUBLISH insert 25
