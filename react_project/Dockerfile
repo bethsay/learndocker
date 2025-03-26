@@ -15,6 +15,9 @@ RUN npm run build
 FROM nginx AS prod_stage
                                     # We could skip naming this stage as we dont wont refernce it later.
                                     # If we didnt label prod_stage, docker will see this "AS 1"
+EXPOSE 80
+                                    # EXPOSE is used as comments. It does not actually expose the port.
+                                    # Docker ignores this untill user runs this Dockerfile with -P flag. Not the same as -p flag.
 COPY --from=build_stage /opt/react_project/build /usr/share/nginx/html
                                     # dockerhub documentation of nginx tells us where to place files to be hosted 
                                     # --from is refering to image created by build_stage.
