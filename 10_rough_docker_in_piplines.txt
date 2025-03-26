@@ -1,19 +1,19 @@
 ***||||Stop and delete all AWS resources created for this||||*****
 
 create github repo, send react_project to it
-create CI pipline to
+create CI pipeline to
     watch for change in repo
 	test code
 	deploy code to Prod if test passed
 
 Sample config of travis is added as reference. Do this using Github Action or Jenkins
 Github to Travis or Jenkins is requrird. Steps for that isnt listed
-#vim .travis.yml
+#vim react-project/.travis.yml
 sudo: required
 services:
 	- docker
 before_install:
-	- docker build -t betzdockz/myreact_app-dev -f ./react-project/Dockerfile.dev ./react-project
+	- docker build -t betzdockz/myreact_app-dev -f .Dockerfile.dev
 script:
 	- docker run --rm --name react_app-test betzdockz/myreact_app-dev npm test -- --coverage
 if you see test failure, you may need to docker run -e CI=true or put it in the .env file
@@ -57,8 +57,8 @@ on:
 
 Another Sample of Github action can be found here https://github.com/docker/build-push-action
 
-Create Elastic Beanstalk app with Web server env using docker platoform
-Continuing with Travis pipline, 
+Create New Application in Elastic Beanstalk with Web server environment using docker platform
+Continuing with Travis pipeline,
 #vim travis.yml
 sudo: required
 services:
@@ -78,20 +78,27 @@ deploy:
 	secret_access_key: $IAM_SECRET		
 Get IAM access id and key to perform deploy and create env variables in travis.
 Push this yml file to github and travis will run it.
-FYI Dockerfile will be used in deploy phase.
+As there is only one Dockerfile, EB will use it to perform docker build and run. Dockerfile.dev will not be considered.
 Even if deploy is successful, we will not see our react-app because port mapping was not done.
-#vim Dockerfile
-FROM nginx AS prod_stage
-EXPOSE 80
-COPY --from=build_stage /opt/react_project/build /usr/share/nginx/html
+	#vim Dockerfile
+	FROM nginx AS prod_stage
+	EXPOSE 80
+	COPY --from=build_stage /opt/react_project/build /usr/share/nginx/html
 Push this to github
-this EXPOSE line will work in manual deployment only if you use docker run -P. If you didnt specify EXPOSE, -P will expose all ports anyways
-According to docker docs, EXPOSE is used only as comments to whoever is performing the deploy cuz it have no effect when doing docker build or run
+this EXPOSE line will work in manual deployment only if you use docker run -P. Docker will map the expose port of container to a random port on the host.
+According to docker docs, EXPOSE is used as comments to whoever is performing the deploy, as it needs the manual intervention(-P flag to be explicity mentioned) to come into effect.
 
-Create new github branch frontpage, make changes to App.js, commit and git push origin frontpage
+Create new github branch frontpage, make changes to App.js
+#git checkout -b frontpage
+#vim react_project/src/App.js
+#git commit -a -m "Modify frontpage"
+#git push origin frontpage
 #gh pr create
+	->Enter the title and body to describe this pr
 CI will trigger checks or git push or npm test. i dont know
-Once reviewed and merged to main, travis will redeploy to EBS
+Once reviewed and merged to main,
+#gh pr merge
+travis will redeploy to EB
 After successful builds, tests and deploys are observed,
 
 ***||||Stop and delete all AWS resources created for this||||*****
