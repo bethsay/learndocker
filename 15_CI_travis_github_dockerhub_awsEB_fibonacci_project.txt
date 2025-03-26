@@ -1,0 +1,139 @@
+***||||Stop and delete ElasticBeanstalk created for this||||*****
+
+push fibonacci_project to github,
+CI builds test image, test if code/app works
+CI builds prod image, push prod image to dockerhub
+CI sends trigger to AWS EB to pull image from dockerhub and deploy it.
+
+Create Dockerfile for worker, express that can build a prod image
+    #vim fibonacci_project/express/Dockerfile
+    #vim fibonacci_project/worker/Dockerfile
+    ->copy all lines from Dockerfile.dev. CMD will have to be replaced.
+    ->CMD [ "npm", "run", "start" ]
+Dockerfile for nginx will be same as dev. Optionally create another default.conf without the ws or sockjs
+    #vim fibonacci_project/nginx/Dockerfile
+Dockerfile for react will be a copy from previous react_project.
+    #vim fibonacci_project/react/Dockerfile
+    ->copy all lines from react_project. Ensure WORKDIR and EXPOSE are updated.
+    ->WORKDIR /opt/fibonacci_react
+    ->EXPOSE 3000
+    ->COPY --from=build_stage /opt/fibonacci_react/build /usr/share/nginx/html
+In react_project we had used Nginx on port 80 to serve the file of npm build.
+Here, in fibonacci_project, Nginx runs as a reverse proxy for express and react and is listening on 80.
+We use Nginx for react component to function as a webserver that serves the front end files.
+We need both. So, Nginx for reverse proxy will by on 80, Nginx for react will be 3000.
+
+Create github repo and fetch its remote URL.
+Setup git in fibonacci_project and send all of it to the github repo
+    #cd fibonacci_project
+    #git init
+    #git add .
+    #git commit -m "Inital commit"
+    #git remote origin <https://github.com/repo_owner/reponame.git>
+    #git remote -v
+    #git push origin main
+
+Create pipeline.
+If you are using travis, trigger a sync and observe if repo_name gets listed. Enable repo_name for build integration.
+Create travis job/pipeline to build test images, run tests with the images. If the test pass, build prod images, push them to dockerhub
+    #vim fibonacci_project/.travis.yml
+    ->sudo: required
+    ->services: 
+    -> - docker
+    ->before_install:
+    -> - docker build -t betzdockz/fib-react-test -f ./react/Dockerfile.dev ./react
+    ->script:
+    -> - docker run --rm --name fib-react-test betzdockz/fib-react-test npm test -- --coverage
+At the moment only fib-react test exists in App.test.js.
+The tests defined in react checks if the App breaks. To pass, app.js, fib.js and express should not have any failures or severe errors.
+To modify or remove the test, edit fibonacci_project/react/src/App.test.js.
+If tests for other componenets were present, we would list test image building for for each component within before_install: and run them within script: block.
+If pipeline is stuck even though the tests passed, try with env CI=true. It could be within react/.env file or passed during docker run.
+    ->script:
+    -> - docker run --rm -e CI=true --name fib-react-test betzdockz/fib-react-test npm test
+If test is successful and exits with 0, we will build prod version of all componenets, login to dockerhub and push all images to our dockerhub repo
+    ->after_success:
+    -> - docker build -t betzdockz/fib-worker ./worker
+    -> - docker build -t betzdockz/fib-express ./express
+    -> - docker build -t betzdockz/fib-react ./react
+    -> - docker build -t betzdockz/fib-nginx ./nginx
+we are skipping -f in prod "docker build" as default Dockerfile has the instructions
+In our travis-ci.org account, declare environment variables with names DOCKERHUB_USER and DOCKERHUB_PASS and values that we use to login to dockerhub 
+    -> - echo "$DOCKERHUB_PASS" | docker login -u "$DOCKERHUB_USER" --password-stdin
+    -> - docker push betzdockz/fib-worker 
+    -> - docker push betzdockz/fib-express
+    -> - docker push betzdockz/fib-react
+    -> - docker push betzdockz/fib-nginx
+Save the file. 
+    #git commit -a -m "Add travis.yml pipeline that will build test image and run them. And if it was successful, build prod images and push them to dockerhub"
+    #git push origin master
+Check travis-ci.org for github commit detection. Check the pipeline logs.
+If pipeline ran successfully, login to dockerhub and verify if prod fib images are listed.
+
+Deploy to AWS elasticbeanstalk
+In react_project only one Dockerfile was present and EB would run it by default. We cannot rely on this default function for fibonacci_project.
+We will need to convert docker-compose.yml to Dockerrun.aws.json. Services gets converted Container definitions or task definitions.
+    #vim fibonacci_project/Dockerrun.aws.json
+    ->{"AWSEBDockerrunVersion":2,"containerDefinitions":[{"name":"react","image":"betzdockz/fib-react","hostname":"react","essential":false,"memory":128},{"name":"express","image":"betzdockz/fib-express","hostname":"express","essential":false,"memory":128},{"name":"worker","image":"betzdockz/fib-worker","hostname":"worker","essential":false,"memory":128},{"name":"nginx","image":"betzdockz/fib-nginx","hostname":"nginx","essential":true,"portMappings":[{"hostPort":80,"containerPort":80}],"links":["react","express"],"memory":128}]}
+Here we define the image_name to be pulled from dockerhub, container_name that EB should use and hostname that would be called by the code.
+EB requires at least 1 container to be flagged as essential. If this container is not healthy, all others will be removed. It also require memory to be defined for each container.
+nginx has portMappings that connects hostPort of EB to containerPort and links block to list the container_names that nginx must connet to.
+Create New Application "fibonacci_app" in Elastic Beanstalk with Web server environment "fibonacci_env" using docker platform
+We will not be using postgres and redis as containers in prod. Instead we will use RDS and elasticache from AWS. 
+When using multiple AWS services, you need to ensure ensure all are deployed within the same vpc and a security group has the rule to allow traffic between EB, RDS and cache.
+Open RDS page and create Database of type postgres. Define RDSname, dbname, dbuser and dbpass. Copy these for later use.
+Open elasticache page and Create instance of type Redis. Define name.
+Open vpc page and create security group. Define name. Create inbound rule that allows tcp traffic from current security group.
+Modify the EB, RDS and cache to use the security group created above.
+express and worker need the details of RDS and elasticache passed as env variables. These can be passed via EB->Config->Software->Modify
+    ->REDIS_HOST=<copy endpoint URL from elasticache page>
+    ->REDIS_PORT=6379
+    ->PGHOST=<copy endpoint URL from RDS page>
+    ->PGPORT=5432
+    ->PGDATABASE=<dbname defined during RDS creation>
+    ->PGUSER=<dbuser defined during RDS creation>
+    ->PGPASSWORD=<dbpass defined during RDS creation>
+These variables get passed to all containers
+Open IAM page and create user fib_app_user. Search existing policies for beanstalk and assign it to user. copy the accessID and secret for use in travis.
+Open travis-ci.org and open repo_name. More_options->Setting->environment_variables. Create varaibles IAM_ID and IAM_SECRET whose values are ID and secret copied during IAM creation.
+To the exisiting travis.yml, add the below deploy block to its exisiting content
+    #vim fibonacci_project/.travis.yml
+    ->deploy:
+    ->	edge: true	#optional
+    ->	provider: elasticbeanstalk
+    ->	region: us-west-1
+    ->	app: fibonacci_app
+    ->	env: fibonacci_env
+    ->	bucket_name: <s3-name-created-elasticbeanstalk>
+    ->	bucket_path: fibonacci_project
+    ->	on:
+    ->		branch: main
+    ->	access_key_id: #IAM_ID
+    ->	secret_access_key: $IAM_SECRET
+Save file.
+    #git commit -a -m "Update travis.yml with deploy block"
+    #git push origin master
+Check travis-ci.org for github commit detection. Check the pipeline logs.
+If pipeline ran successfully, Check status in EB.
+If EB health is green/OK click URL available on page. IF EB health is not OK, download last 100 lines of logs and analyse.
+
+Lets trigger the entire flow.
+Create new github branch called homepage, make changes to App.js, commit and 
+#git checkout -b homepage
+#vim fibonacci_project/react/src/App.js
+    ->Modify the content of h1 block
+#git commit -a -m "Modify homepage"
+#git push origin homepage
+#gh pr create
+	->Enter the title and body to describe this pr
+#gh pr merge
+
+Lets Cleanup.
+Open EB page, fibonacci_app->Actions->Delete Application->Delete
+Open RDS, Instances->RDSname->Delete->No final snapshot->"delete me"->Delete
+Open elasticache, elasticache_name->Delete
+The default vpc and sg must not be cleared.
+Open vpc, Security Group->select all those related to fibonacci_project->Security Group Actions->Delete
+Open IAM, Users->fib_app_user->Delete User->Yes, Delete
+
+***||||Stop and delete all AWS resources created for this||||*****
