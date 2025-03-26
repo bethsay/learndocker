@@ -4,7 +4,7 @@ Create Dockerfile.dev within fibonacci_project/react/ to build react component
 Use the same Dockerfile.dev from previous react_project, and update workdir.
 Create Dockerfile.dev within fibonacci_project/express/ and fibonacci_project/worker/
 Use the same Dockerfile.dev as in react. Update the workdir and use the startup cmd as "npm run dev".
-Create Dockerfile.dev within fibonacci_project/nginx/ with base image nginx and overwrite its /etc/nginx/conf.d/default.conf with our custom default.conf
+Create Dockerfile.dev within fibonacci_project/nginx/ with base image nginx and overwrite its /etc/nginx/conf.d/default.conf with our custom default-dev.conf
 
 Postgres and redis are needed but lets test the build and run of these 3 componenets.
 We could navigate in and out of each component folders and perform docker build and run,
