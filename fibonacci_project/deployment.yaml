@@ -1,0 +1,31 @@
+apiVersion: apps/v1                         #Deployment resource is under the scope of apps/v1.
+kind: Deployment                            #type of resource that manages a set of atleast 1 pod. This is the better than declaring individual pods.
+#                                           #deployment monitors that state of its pods and can manages pod creation, termination, updation and scaling.
+metadata:
+  name: react-deployment                    #name of the deployment.
+spec:                                       #specification of the deployment.
+  replicas: 1                               #number of running pods that should be maintained by this deployment.
+  selector:                                 #pod selector. deployment relys on this to track the pods it has created.
+    matchLabels:                            #used for exact matching of key-value. matchExpressions is an alternative.
+      component: frontend                   #when template is modified, new pods get deployed to replace all pods with this key-value pair.  
+#   matchExpressions:                       #used for matching key with operators and values. each key gets listed as array element.  
+#     - key: component
+#       operator: In                        #operator that checks if listed value matches target value. available operators are In, NotIn, Exists, DoesNotExist, Gt, Lt.
+#       values:
+#       - frontend                          #values are listed as an array and are coupled with operator while selecting target pods.
+#     - {key: component, operator: In, values: [frontend]}                #json format is allowed within yaml.
+  template:                                 #defines the desired state of the pods managed by this deployment.
+    metadata:
+      labels:                               #This label will be applied to all pods created by this deployment.
+        component: frontend                 #this key-value pair will be assigned to all pods created by this deployment.
+    spec:                                   #specification of the pod that will be managed by this deployment.
+      containers:                           #list of containers that must be running in the pod.
+      - name: react
+        image: betzdockz/fib-react
+        imagePullPolicy: Never
+        resources:
+          limits:
+            memory: "128Mi"
+            cpu: "500m"
+        ports:
+        - containerPort: 3000

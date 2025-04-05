@@ -1,0 +1,19 @@
+apiVersion: v1                  #Pod resource is under the scope of v1
+kind: Pod                       #one type of resource that can be deployed in k8s nodes. Most of the time contains only one container.
+#                               #k8s is not designed to run containers, but can deploy pods that has atleast one running containers. 
+#                               #a senario to run other containers in same pod is when their entire functionality depends solely on the primary container.
+metadata:
+  name: react-pod               #name of the pod. Used for debugging/troubleshooting/logging. Must be unique in a namespace.
+  labels:                       #key-value pair we created to be used as pod identifier. Can be reused.
+    component: frontend         #service.yaml refers to this pod with its selector:.
+spec:
+  containers:
+  - name: react                 #identifier of the container in the pod. Used for logging and pod intranet.
+    image: betzdockz/fib-react
+    imagePullPolicy: Never      #Default is Always. Never is used to force node to use local image.
+    resources:
+      limits:
+        memory: "128Mi"
+        cpu: "500m"
+    ports:
+      - containerPort: 3000

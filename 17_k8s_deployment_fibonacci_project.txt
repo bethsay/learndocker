@@ -1,0 +1,43 @@
+Running pods can be updated by modifying the pod.yaml used to create it. Modifications to kind: or metadata:name: will result in creation of new resource
+But updates are limited to image name. Changes to port, cpu/mem limit, policy, etc are forbidden. Try changing these in pod.yaml
+    #cd fibonacci_project
+    #vim pod.yaml
+    #kubectl apply -f pod.yaml
+Deployments are another k8s resource that will allow us to manage pods. This allows us to modify the forbidden parameters and also replicate pods
+    #touch deployment.yaml
+Lets cleanup the pod created by pod.yaml with any of one delete command
+    #kubectl delete -f pod.yaml         ->Declative
+    #kubectl delete pod react-pod       ->Imperative
+    #kubectl get pods
+    #docker ps -a
+Lets apply the deployment.yaml and check the status of the deployment, the pods created by the template, and the containers running
+    #kubectl apply -f deployment.yaml
+    #kubectl get deploy -o wide
+    #kubectl describe deploy react-deployment
+    #kubectl describe deploy/react-deployment
+    #kubectl get pods -o wide
+    #kubectl logs deploy/react-deployment --prefix --timestamps             ->the pod_name/container_name and timestamp is added for each logline 
+    #kubectl logs deploy/react-deployment -c react --since=10m              ->fetch logs from 10 minutes ago only from the container_name "react"
+    #docker ps
+
+To observe the resiliance of k8s deployment, lets crash the pod and crash the container and 
+    #docker stop <container_id>
+    #docker ps
+    #kubectl delete pod <pod_name>
+    #kubectl get pods
+    #kubectl get deploy
+Anytime we update any spec of deployment.yaml, new pods get deployed. Once their status is running, old pods get terminated.
+
+If an image gets updated, but it reuses the same tag as per the pod.yaml or deployment.yaml, it cant be pulled by the existing deployment.yaml.
+    #cd fibonacci_project
+    #vim fibonacci_project/react/src/App.js
+        ->Edit the content of h1 block to say version 2
+    #docker build -t betzdockz/fib-react ./react
+    #kubectl apply -f deployment.yaml
+You get response that config was not changed and none of the containers get recreated. When we access http://localhost:30002/ we will still see older fib-react.
+Best practice should be followed to use unique image:tag during docker build and push for every app change.
+    #docker build -t betzdockz/fib-react:v1.1.0 ./react
+    #vim deployment.yaml
+        ->spec: template: spec: containers: image: betzdockz/fib-react:v1.1.0
+    #kubectl apply -f deployment.yaml
+Check the heading change in http://localhost:30002/

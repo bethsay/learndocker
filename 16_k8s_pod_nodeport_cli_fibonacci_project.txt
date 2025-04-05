@@ -1,0 +1,61 @@
+Kubernetes allows us to scale the number of any container within a multicontainer deployment
+Kubernetes cluster is made up of control plane and nodes.
+kubectl is the cli client to interact with with k8s cluster
+minikube can setup a single virtual host that runs one k8s cluster (ie 1 controller and 1 node) on it.
+k8s cluster can be run on docker desktop by enabling it in settings page
+    #minikube start                 #avoid minikube if you have kubernetes running via docker desktop
+    #kubectl cluster-info
+
+Convert fibonacci_project/docker-compose.yml to k8s
+docker-compose could build and deploy images.                                                   ||  k8s can only deploy images.
+docker-compose can deploy any number of containers with service definitions in a single file.   ||  k8s can setup only 1 resource with a single file.
+docker-compose would manage network and ports of all its containers.                            ||  k8s networking requires an admin.
+    #cd fibonacci_project
+    #touch pod.yaml                 #Open in VScode. Type "pod" and then TAB key to autocomplete the k8s config
+        ->configure pod to deploy the betzdockz/fib-react image
+    #touch service.yaml             #Open in VScode. Type "service" and then TAB key for autocomplete the k8s config
+        ->configure service to connect the pod to a nodeport
+Declative management of k8s is carried out with yaml files.
+    Here desired state is decalred by k8s admin or developer into files and passes them to kube-apiserver.
+    kube-apiserver polls the current state of k8s cluster and matches it with desired state.
+    kube-apiserver applies correction on every resource that doesnt match with desired state.
+Imperative commands are an alternative used to manage a cluster and resources more directly
+    Here the k8s admin holds knowledge of the desired state.
+    k8s admin checks the current state of k8s cluster.
+    k8s admin runs kubectl commands to update any resources that doesnt match the desired state
+The resource.yaml must include:
+    ->apiVersion: Scope of the resource being defined. Eg: v1(includes Pod, Service), apps/v1(include StatefulSet, Deployment), networking.k8s.io/v1(includes Ingress, NetworkPolicy)
+    ->kind: Type of resource to be deployed. Eg: Pod, Service, StatefulSet, ReplicaController, Deployment, Ingress, NetworkPolicy
+    ->metadata: name and labels other resource identifiers
+    ->spec: specifications of the desired state of the the resource
+Every node has a kube-proxy. kube-proxy analyses the traffic entering the node and forwards it to appropriate k8s service.
+    #cd fibonacci_project
+    #kubectl apply -f pod.yaml
+    #kubectl apply -f service.yaml
+    #kubectl get pods -o wide
+    #kubectl get services -o wide
+    #kubectl get nodes -o wide
+    #kubectl describe pod react-pod
+    #kubectl describe service frontend-service
+    #kubectl describe node docker-desktop
+    #kubectl logs react-pod
+    #kubectl logs --tail=10 -f react-pod -c react               ->last 10 loglines and livelogs from the container_name "react"
+    #kubectl exec react-pod -- date                             ->Run date command in first container of react-pod
+    #kubectl exec -it react-pod -c react -- bash                ->Open interactive bash teminal on react container within react-pod
+We should be able to access the react page via browser http://localhost:30002/ or http://kubernetes.docker.internal:30002/ 
+If you are using minikube or Linux, try http://<minikube.ip.addr>:30002/ or http://<node.ip.addr>:30002/
+
+To observe the resiliance of k8s pods, let crash the container.
+    #kubectl get pods
+    #docker ps
+react-pod will have 0 restarts 1/1 ready (running_containers/desired_container ready) status.
+Every node has docker running in it. Docker desktop client is connected to both docker servers, ie running on windows and on k8s node.
+If your k8s cluster is running on minikube, you can setup the docker client on host to connect to docker server on minikube k8s node. This is limited to the current TTY session
+    #minikube docker-env
+    #eval $(minikube docker-env)
+Copy the container_id fron docker ps and kill/stop it
+    #docker stop <container_id>
+    #docker ps
+    #kubectl get pods
+You should see another container running with different container_id. This is because the react-pod identified the container crash and performed a redeploy.
+react-pod should have the same 1/1 ready status an restarts 1, ie an increment in the restart counter.
